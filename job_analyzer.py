@@ -89,6 +89,7 @@ APPLICATION_PATTERNS = [
 
 # Tecnologías relevantes para el perfil
 SKILLS = {
+    "full stack": ["full stack", "fullstack"],
     "node.js": ["node.js", "node"],
     "typescript": ["typescript"],
     "javascript": ["javascript"],
@@ -480,38 +481,50 @@ def calculate_score(skills, subject, body):
 
     score = 0
 
-    # Cada tecnología coincidente
-    score += min(len(skills) * 8, 48)
+    # Tecnologías principales del perfil
+    priority = {
+        "python": 15,
+        "full stack": 15,
+        "javascript": 10,
+        "typescript": 10,
+        "react": 10,
+        "node.js": 10,
+        "php": 8,
+        "sql": 7,
+        "mysql": 7,
+        "rest api": 7,
+        "mongodb": 5,
+        "c#": 5,
+        ".net": 5,
+        "jwt": 4,
+        "git": 3,
+        "html": 2,
+        "css": 2,
+        "angular": 3,
+    }
 
-    # Coincidencias especialmente relevantes
-    if "node.js" in skills:
-        score += 8
-
-    if "typescript" in skills:
-        score += 8
-
-    if "mysql" in skills:
-        score += 5
-
-    if "javascript" in skills:
-        score += 5
-
-    if "rest api" in skills:
-        score += 5
+    for skill in skills:
+        score += priority.get(skill, 2)
 
     # Modalidad remota
     if "remote" in text or "remoto" in text:
         score += 8
 
-    # Nivel junior
+    # Nivel compatible
     if "junior" in text:
         score += 8
 
     if "trainee" in text:
         score += 5
 
-    return min(score, 100)
+    # Penalizar experiencia claramente superior
+    if re.search(r"\b[5-9]\+? años?\b", text):
+        score -= 15
 
+    if "senior" in text:
+        score -= 15
+
+    return max(0, min(score, 100))
 
 def classify(score):
     if score >= 60:
