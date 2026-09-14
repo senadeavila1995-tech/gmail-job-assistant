@@ -323,161 +323,18 @@ def analyze_email(service, message_id):
 
         subject = data.get("subject", "")
         body = data.get("body", "")
-        sender_name = data.get("sender_name", "")
-        sender_email = data.get("sender_email", "")
 
         status = classify_status(subject, body)
 
-        # -----------------------------------------------------
-        # Analizador normal
-        # -----------------------------------------------------
+        # Si no parece un proceso laboral, dejamos que el analizador
+        # existente decida si es una oportunidad.
         analyzed = analyze(data)
 
-        if analyzed:
-            from job_analyzer import classify_work_mode
-            analyzed["work_mode"] = classify_work_mode(subject, body)
-
-        # -----------------------------------------------------
-        # Las confirmaciones de candidatura también son
-        # oportunidades laborales válidas.
-        # -----------------------------------------------------
-        if status == "APLICADA":
-            import re
-
-            text = f"{subject} {body}"
-
-            # Empresa: normalmente viene en el nombre del remitente.
-            company = sender_name.strip() if sender_name else ""
-
-            if not company:
-                company = "Empresa no identificada"
-
-            # -------------------------------------------------
-            # Extraer cargo desde frases típicas de ATS.
-            # Ejemplo:
-            # "we received your application for React Engineer..."
-            # -------------------------------------------------
-            position = ""
-
-            position_patterns = [
-                # Caso típico de Lever:
-                # "we received your application for React Engineer - Remote,
-                # Latin America, and we are delighted..."
-                r"received your application for\s+(.+?),\s+and we\b",
-                r"application for\s+(.+?),\s+and we\b",
-                r"applied for\s+(.+?),\s+and we\b",
-                r"application for the position of\s+(.+?),\s+and we\b",
-                r"application for the role of\s+(.+?),\s+and we\b",
-            ]
-
-            for pattern in position_patterns:
-                match = re.search(
-                    pattern,
-                    text,
-                    re.IGNORECASE
-                )
-
-                if match:
-                    position = re.sub(
-                        r"\\s+",
-                        " ",
-                        match.group(1)
-                    ).strip()
-
-                    position = position.rstrip(",")
-                    break
-
-            # Fallback: intentar encontrar un título técnico.
-            if not position:
-                title_patterns = [
-                    r"React Engineer[^<.!?]*",
-                    r"Software Engineer[^<.!?]*",
-                    r"Frontend Developer[^<.!?]*",
-                    r"Backend Developer[^<.!?]*",
-                    r"Full Stack Developer[^<.!?]*",
-                    r"Fullstack Developer[^<.!?]*",
-                    r"Software Developer[^<.!?]*",
-                    r"Developer[^<.!?]*",
-                ]
-
-                for pattern in title_patterns:
-                    match = re.search(
-                        pattern,
-                        text,
-                        re.IGNORECASE
-                    )
-
-                    if match:
-                        position = re.sub(
-                            r"\\s+",
-                            " ",
-                            match.group(0)
-                        ).strip()
-                        break
-
-            if not position:
-                position = subject.strip()
-
-            # -------------------------------------------------
-            # Score de candidatura
-            # -------------------------------------------------
-            try:
-                from job_analyzer import (
-                    extract_skills,
-                    calculate_score,
-                    classify,
-                )
-
-                skills = extract_skills(
-                    subject,
-                    body
-                )
-
-                score = calculate_score(
-                    skills,
-                    subject,
-                    body
-                )
-
-                classification = classify(score)
-
-            except Exception:
-                skills = []
-                score = 0
-                classification = "SIN CLASIFICAR"
-
-            result = {
-                "id": message_id,
-                "status": status,
-                "status_config": STATUS_CONFIG[status],
-                "subject": subject,
-                "company": company,
-                "position": position[:150],
-                "source": sender_email.split("@")[-1].lower()
-                    if "@" in sender_email
-                    else "",
-                "sender": sender_name or sender_email,
-                "sender_email": sender_email,
-                "date": data.get("date", ""),
-                "body": body,
-                "skills": skills,
-                "score": score,
-                "classification": classification,
-                "url": "",
-                "gmail_url": (
-                    "https://mail.google.com/mail/u/0/#all/"
-                    + message_id
-                ),
-            }
-
-            return result
-
-        # -----------------------------------------------------
-        # Oportunidades normales
-        # -----------------------------------------------------
         if not status and not analyzed:
             return None
 
+        # Si el analizador lo considera relevante pero no pudimos
+        # determinar estado, lo mostramos como oferta.
         if not status:
             status = "OFERTA"
 
@@ -488,15 +345,12 @@ def analyze_email(service, message_id):
             "status": status,
             "status_config": STATUS_CONFIG[status],
             "subject": subject,
-            "sender": sender_name or sender_email,
-            "sender_email": sender_email,
+            "sender": data.get("sender_name") or data.get("sender_email", ""),
+            "sender_email": data.get("sender_email", ""),
             "date": data.get("date", ""),
             "source": data.get("source") or "",
             "body": body,
-            "gmail_url": (
-                "https://mail.google.com/mail/u/0/#all/"
-                + message_id
-            ),
+            "gmail_url": f"https://mail.google.com/mail/u/0/#all/{message_id}",
         })
 
         return result
@@ -559,23 +413,6 @@ def dashboard():
 
     for item in opportunities:
         grouped[item["status"]].append(item)
-
-    # Ordenar cada sección por fecha: más reciente primero.
-    from email.utils import parsedate_to_datetime
-
-    def sort_by_date(item):
-        date_value = item.get("date", "")
-
-        try:
-            return parsedate_to_datetime(date_value).timestamp()
-        except Exception:
-            return 0
-
-    for status in grouped:
-        grouped[status].sort(
-            key=sort_by_date,
-            reverse=True,
-        )
 
     stats = {
         status: len(grouped[status])

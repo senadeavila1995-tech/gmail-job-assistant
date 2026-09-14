@@ -58,98 +58,153 @@
     {% endif %}
 
 
-    <!-- RESUMEN POR ESTADO -->
+    <!-- RESUMEN -->
 
-    <div class="row g-3 mb-4" id="status-summary">
+    
+    <!-- RESUMEN POR MODALIDAD -->
 
-        {% set summary_statuses = [
-            "ENTREVISTA",
-            "ADMISION",
-            "PRUEBA",
-            "SEGUIMIENTO",
-            "APLICADA",
-            "OFERTA",
-            "RECHAZADA"
-        ] %}
+    <div class="row g-3 mb-5" id="modality-summary">
 
-        {% for summary_status in summary_statuses %}
+        <div class="col-6 col-md-3">
+            <div class="stat-card stat-nav"
+                 role="button"
+                 tabindex="0"
+                 data-mode-target="REMOTO">
 
-        <div class="col-6 col-md-4 col-lg-3">
-
-            <div class="stat-card stat-status-card"
-                 data-status-counter="{{ summary_status }}">
-
-                <div class="stat-icon">
-                    {{ status_config[summary_status].icon }}
-                </div>
+                <div class="stat-icon">🟢</div>
 
                 <div class="stat-content">
 
-                    <div class="stat-number">
+                    <div class="stat-number"
+                         data-mode-counter="REMOTO">
                         0
                     </div>
 
                     <div class="stat-title">
-                        {{ status_config[summary_status].title }}
+                        100% remoto
                     </div>
 
                 </div>
 
-            </div>
+                <div class="stat-arrow">→</div>
 
+                <div class="stat-hint">
+                    Ver sección
+                </div>
+
+            </div>
         </div>
 
-        {% endfor %}
+
+        <div class="col-6 col-md-3">
+            <div class="stat-card stat-nav"
+                 role="button"
+                 tabindex="0"
+                 data-mode-target="HIBRIDO">
+
+                <div class="stat-icon">🟡</div>
+
+                <div class="stat-content">
+
+                    <div class="stat-number"
+                         data-mode-counter="HIBRIDO">
+                        0
+                    </div>
+
+                    <div class="stat-title">
+                        Híbrido
+                    </div>
+
+                </div>
+
+                <div class="stat-arrow">→</div>
+
+                <div class="stat-hint">
+                    Ver sección
+                </div>
+
+            </div>
+        </div>
+
+
+        <div class="col-6 col-md-3">
+            <div class="stat-card stat-nav"
+                 role="button"
+                 tabindex="0"
+                 data-mode-target="PRESENCIAL">
+
+                <div class="stat-icon">🔴</div>
+
+                <div class="stat-content">
+
+                    <div class="stat-number"
+                         data-mode-counter="PRESENCIAL">
+                        0
+                    </div>
+
+                    <div class="stat-title">
+                        No remoto / presencial
+                    </div>
+
+                </div>
+
+                <div class="stat-arrow">→</div>
+
+                <div class="stat-hint">
+                    Ver sección
+                </div>
+
+            </div>
+        </div>
+
+
+        <div class="col-6 col-md-3">
+            <div class="stat-card stat-nav"
+                 role="button"
+                 tabindex="0"
+                 data-mode-target="NO_DEFINIDO">
+
+                <div class="stat-icon">⚪</div>
+
+                <div class="stat-content">
+
+                    <div class="stat-number"
+                         data-mode-counter="NO_DEFINIDO">
+                        0
+                    </div>
+
+                    <div class="stat-title">
+                        Sin definir
+                    </div>
+
+                </div>
+
+                <div class="stat-arrow">→</div>
+
+                <div class="stat-hint">
+                    Ver sección
+                </div>
+
+            </div>
+        </div>
 
     </div>
+
+
 
     <!-- FILTRO DE MODALIDAD -->
 
     <div class="card shadow-sm border-0 mb-4">
-
         <div class="card-body">
 
             <div class="row align-items-center g-3">
 
                 <div class="col-md-8">
 
-                    <label for="global-work-mode-filter"
-                           class="form-label fw-semibold mb-1">
-                        Filtrar por modalidad
-                    </label>
-
-                    <select id="global-work-mode-filter"
-                            class="form-select">
-
-                        <option value="TODAS">
-                            Todas
-                        </option>
-
-                        <option value="REMOTO">
-                            🟢 100% remoto
-                        </option>
-
-                        <option value="HIBRIDO">
-                            🟡 Híbrido
-                        </option>
-
-                        <option value="PRESENCIAL">
-                            🔴 No remoto / presencial
-                        </option>
-
-                        <option value="NO_DEFINIDO">
-                            ⚪ Sin definir
-                        </option>
-
-                    </select>
-
-                </div>
-
-                <div class="col-md-4">
-
                     <div class="text-muted small mt-md-4">
-                        Filtra las oportunidades sin cambiar
-                        su estado ni eliminar información.
+                        Las oportunidades no se eliminan.
+                        Usa este filtro para mostrar la modalidad
+                        laboral que te interese.
                     </div>
 
                 </div>
@@ -157,13 +212,12 @@
             </div>
 
         </div>
-
     </div>
 
 
     <!-- PRIORIDAD -->
 
-    {% if True %}
+    {% if grouped.get("ENTREVISTA") or grouped.get("ADMISION") %}
 
     <div class="priority-section mb-5">
 
@@ -184,6 +238,8 @@
 
 
         {% for status in ["ENTREVISTA", "ADMISION"] %}
+
+            {% if grouped.get(status) %}
 
                 <div
                     id="{% if status == 'ENTREVISTA' %}entrevistas{% else %}admision{% endif %}"
@@ -338,6 +394,7 @@
 
                 {% endfor %}
 
+            {% endif %}
 
         {% endfor %}
 
@@ -355,6 +412,8 @@
         "OFERTA",
         "RECHAZADA"
     ] %}
+
+        {% if grouped.get(status) %}
 
         <section
             id="{% if status == 'PRUEBA' %}pruebas{% elif status == 'SEGUIMIENTO' %}seguimiento{% elif status == 'APLICADA' %}aplicaciones{% elif status == 'OFERTA' %}ofertas{% elif status == 'RECHAZADA' %}rechazadas{% endif %}"
@@ -378,7 +437,26 @@
                         correo(s)
                     </p>
 
+                    <div class="section-mode-counts"
+                         data-section-mode-counts="{{ status }}">
 
+                        <span data-section-mode="REMOTO">
+                            🟢 Remoto: 0
+                        </span>
+
+                        <span data-section-mode="HIBRIDO">
+                            🟡 Híbrido: 0
+                        </span>
+
+                        <span data-section-mode="PRESENCIAL">
+                            🔴 Presencial: 0
+                        </span>
+
+                        <span data-section-mode="NO_DEFINIDO">
+                            ⚪ Sin definir: 0
+                        </span>
+
+                    </div>
 
                 </div>
 
@@ -536,6 +614,7 @@
 
         </section>
 
+        {% endif %}
 
     {% endfor %}
 
@@ -569,16 +648,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const modeSelects =
         document.querySelectorAll(".work-mode-select");
 
-    const jobCards =
-        document.querySelectorAll(".job-card");
-
-    const globalFilter =
-        document.getElementById("global-work-mode-filter");
-
 
     function normalizeMode(mode) {
-
-        mode = (mode || "").trim().toUpperCase();
 
         if (
             mode === "REMOTO" ||
@@ -593,244 +664,235 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 
-    function normalizeStatus(status) {
-        return (status || "").trim().toUpperCase();
-    }
+    function updateModeCounters() {
 
-
-    function getCardWorkMode(card) {
-
-        const mode = card.dataset.workMode;
-
-        if (mode) {
-            return normalizeMode(mode);
-        }
-
-        const select =
-            card.querySelector(".work-mode-select");
-
-        if (select) {
-            return normalizeMode(select.value);
-        }
-
-        return "NO_DEFINIDO";
-    }
-
-
-    function cardMatchesFilter(card, selectedMode) {
-
-        if (selectedMode === "TODAS") {
-            return true;
-        }
-
-        return (
-            getCardWorkMode(card) ===
-            normalizeMode(selectedMode)
-        );
-    }
-
-
-    function updateDashboard() {
-
-        const selectedMode =
-            globalFilter
-                ? globalFilter.value
-                : "TODAS";
+        const globalCounts = {
+            REMOTO: 0,
+            HIBRIDO: 0,
+            PRESENCIAL: 0,
+            NO_DEFINIDO: 0
+        };
 
 
         // ====================================================
-        // 1. MOSTRAR / OCULTAR OPORTUNIDADES
+        // CONTADORES GLOBALES
         // ====================================================
 
-        jobCards.forEach(function (card) {
+        modeSelects.forEach(function (select) {
 
-            const visible =
-                cardMatchesFilter(
-                    card,
-                    selectedMode
-                );
+            const mode =
+                normalizeMode(select.value);
 
-            card.style.display =
-                visible ? "" : "none";
+            globalCounts[mode]++;
 
         });
 
 
-        // ====================================================
-        // 2. RECALCULAR CARDS SUPERIORES POR ESTADO
-        // ====================================================
-
-        const statusCounts = {};
-
-
         document
-            .querySelectorAll("[data-status-counter]")
+            .querySelectorAll("[data-mode-counter]")
             .forEach(function (element) {
 
-                const status =
-                    normalizeStatus(
-                        element.dataset.statusCounter
+                const mode =
+                    normalizeMode(
+                        element.dataset.modeCounter
                     );
 
-                statusCounts[status] = 0;
+                element.textContent =
+                    globalCounts[mode];
 
             });
 
 
-        jobCards.forEach(function (card) {
-
-            if (
-                !cardMatchesFilter(
-                    card,
-                    selectedMode
-                )
-            ) {
-                return;
-            }
-
-
-            const status =
-                normalizeStatus(
-                    card.dataset.status
-                );
-
-
-            if (
-                Object.prototype.hasOwnProperty.call(
-                    statusCounts,
-                    status
-                )
-            ) {
-
-                statusCounts[status]++;
-
-            }
-
-        });
-
+        // ====================================================
+        // CONTADORES DENTRO DE CADA LISTA
+        // ====================================================
 
         document
-            .querySelectorAll("[data-status-counter]")
-            .forEach(function (element) {
+            .querySelectorAll(".section-mode-counts")
+            .forEach(function (container) {
 
-                const status =
-                    normalizeStatus(
-                        element.dataset.statusCounter
-                    );
+                const section =
+                    container.closest(".status-section");
 
-                const number =
-                    element.querySelector(
-                        ".stat-number"
-                    );
-
-                if (number) {
-
-                    number.textContent =
-                        statusCounts[status] || 0;
-
+                if (!section) {
+                    return;
                 }
 
-            });
+
+                const counts = {
+                    REMOTO: 0,
+                    HIBRIDO: 0,
+                    PRESENCIAL: 0,
+                    NO_DEFINIDO: 0
+                };
 
 
-        // ====================================================
-        // 3. ACTUALIZAR CONTADORES DE LAS SECCIONES
-        // ====================================================
+                section
+                    .querySelectorAll(".work-mode-select")
+                    .forEach(function (select) {
 
-        document
-            .querySelectorAll(
-                ".priority-section, .status-section"
-            )
-            .forEach(function (section) {
+                        const mode =
+                            normalizeMode(select.value);
 
-                const cards =
-                    section.querySelectorAll(
-                        ".job-card"
-                    );
+                        counts[mode]++;
 
-                let visibleCount = 0;
+                    });
 
-                cards.forEach(function (card) {
 
-                    if (
-                        card.style.display !== "none"
-                    ) {
-                        visibleCount++;
+                const labels = {
+                    REMOTO: "🟢 Remoto",
+                    HIBRIDO: "🟡 Híbrido",
+                    PRESENCIAL: "🔴 Presencial",
+                    NO_DEFINIDO: "⚪ Sin definir"
+                };
+
+
+                Object.keys(counts).forEach(function (mode) {
+
+                    const element =
+                        container.querySelector(
+                            '[data-section-mode="' +
+                            mode +
+                            '"]'
+                        );
+
+                    if (!element) {
+                        return;
                     }
+
+                    element.textContent =
+                        labels[mode] +
+                        ": " +
+                        counts[mode];
 
                 });
 
-                const countElement =
-                    section.querySelector(
-                        ".section-count"
-                    );
-
-                if (countElement) {
-
-                    countElement.textContent =
-                        visibleCount +
-                        " correo(s)";
-
-                }
-
             });
 
     }
 
 
     // ========================================================
-    // CAMBIO DEL FILTRO GLOBAL
-    // ========================================================
-
-    if (globalFilter) {
-
-        globalFilter.addEventListener(
-            "change",
-            function () {
-
-                updateDashboard();
-
-            }
-        );
-
-    }
-
-
-    // ========================================================
-    // CAMBIO DE MODALIDAD DE UNA OPORTUNIDAD
+    // CAMBIO DE MODALIDAD DE UNA CARD
     // ========================================================
 
     modeSelects.forEach(function (select) {
 
-        select.addEventListener(
-            "change",
-            function () {
+        select.addEventListener("change", function () {
 
-                const card =
-                    select.closest(".job-card");
+            const card =
+                select.closest(".job-card");
 
-                if (card) {
+            if (card) {
+                card.dataset.workMode =
+                    normalizeMode(select.value);
+            }
 
-                    card.dataset.workMode =
-                        normalizeMode(
+
+            updateModeCounters();
+
+        });
+
+    });
+
+
+    // Conteo inicial.
+    updateModeCounters();
+
+
+    // ========================================================
+    // NAVEGACIÓN DE CARDS SUPERIORES
+    // ========================================================
+
+    const statCards =
+        document.querySelectorAll(".stat-nav");
+
+
+    statCards.forEach(function (card) {
+
+        function navigateToMode() {
+
+            const targetMode =
+                card.dataset.modeTarget;
+
+            if (!targetMode) {
+                return;
+            }
+
+
+            const targetSelect =
+                Array.from(modeSelects).find(
+                    function (select) {
+
+                        return normalizeMode(
                             select.value
-                        );
+                        ) === targetMode;
+
+                    }
+                );
+
+
+            if (!targetSelect) {
+                return;
+            }
+
+
+            const targetCard =
+                targetSelect.closest(".job-card");
+
+
+            if (!targetCard) {
+                return;
+            }
+
+
+            targetCard.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+
+
+            targetCard.classList.add(
+                "section-highlight"
+            );
+
+
+            setTimeout(function () {
+
+                targetCard.classList.remove(
+                    "section-highlight"
+                );
+
+            }, 1200);
+
+        }
+
+
+        card.addEventListener(
+            "click",
+            navigateToMode
+        );
+
+
+        card.addEventListener(
+            "keydown",
+            function (event) {
+
+                if (
+                    event.key === "Enter" ||
+                    event.key === " "
+                ) {
+
+                    event.preventDefault();
+
+                    navigateToMode();
 
                 }
-
-                updateDashboard();
 
             }
         );
 
     });
-
-
-    // ========================================================
-    // CONTEO INICIAL
-    // ========================================================
-
-    updateDashboard();
 
 });
 </script>

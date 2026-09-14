@@ -578,8 +578,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function normalizeMode(mode) {
 
-        mode = (mode || "").trim().toUpperCase();
-
         if (
             mode === "REMOTO" ||
             mode === "HIBRIDO" ||
@@ -598,35 +596,20 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 
-    function getCardWorkMode(card) {
-
-        const mode = card.dataset.workMode;
-
-        if (mode) {
-            return normalizeMode(mode);
-        }
-
-        const select =
-            card.querySelector(".work-mode-select");
-
-        if (select) {
-            return normalizeMode(select.value);
-        }
-
-        return "NO_DEFINIDO";
-    }
-
-
     function cardMatchesFilter(card, selectedMode) {
 
         if (selectedMode === "TODAS") {
             return true;
         }
 
-        return (
-            getCardWorkMode(card) ===
-            normalizeMode(selectedMode)
-        );
+        const select =
+            card.querySelector(".work-mode-select");
+
+        if (!select) {
+            return false;
+        }
+
+        return normalizeMode(select.value) === selectedMode;
     }
 
 
@@ -657,11 +640,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
         // ====================================================
-        // 2. RECALCULAR CARDS SUPERIORES POR ESTADO
+        // 2. RECALCULAR TARJETAS SUPERIORES POR ESTADO
         // ====================================================
 
         const statusCounts = {};
-
 
         document
             .querySelectorAll("[data-status-counter]")
@@ -679,21 +661,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
         jobCards.forEach(function (card) {
 
-            if (
-                !cardMatchesFilter(
-                    card,
-                    selectedMode
-                )
-            ) {
+            if (!cardMatchesFilter(
+                card,
+                selectedMode
+            )) {
                 return;
             }
-
 
             const status =
                 normalizeStatus(
                     card.dataset.status
                 );
-
 
             if (
                 Object.prototype.hasOwnProperty.call(
@@ -701,9 +679,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     status
                 )
             ) {
-
                 statusCounts[status]++;
-
             }
 
         });
@@ -719,22 +695,18 @@ document.addEventListener("DOMContentLoaded", function () {
                     );
 
                 const number =
-                    element.querySelector(
-                        ".stat-number"
-                    );
+                    element.querySelector(".stat-number");
 
                 if (number) {
-
                     number.textContent =
                         statusCounts[status] || 0;
-
                 }
 
             });
 
 
         // ====================================================
-        // 3. ACTUALIZAR CONTADORES DE LAS SECCIONES
+        // 3. ACTUALIZAR CANTIDAD DE CADA SECCION
         // ====================================================
 
         document
@@ -744,9 +716,7 @@ document.addEventListener("DOMContentLoaded", function () {
             .forEach(function (section) {
 
                 const cards =
-                    section.querySelectorAll(
-                        ".job-card"
-                    );
+                    section.querySelectorAll(".job-card");
 
                 let visibleCount = 0;
 
@@ -760,17 +730,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 });
 
+
                 const countElement =
                     section.querySelector(
                         ".section-count"
                     );
 
                 if (countElement) {
-
                     countElement.textContent =
-                        visibleCount +
-                        " correo(s)";
-
+                        visibleCount + " correo(s)";
                 }
 
             });
@@ -798,6 +766,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // ========================================================
     // CAMBIO DE MODALIDAD DE UNA OPORTUNIDAD
+    //
+    // IMPORTANTE:
+    // Solo cambia la modalidad visual de esa card.
+    // NO cambia data-status.
     // ========================================================
 
     modeSelects.forEach(function (select) {
@@ -826,10 +798,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
 
-    // ========================================================
-    // CONTEO INICIAL
-    // ========================================================
-
+    // Conteo inicial.
     updateDashboard();
 
 });

@@ -1,17 +1,21 @@
-# Entorno virtual
+__pycache__/
+*.py[cod]
+*.bak
+
 .venv/
 venv/
 env/
 
-# Credenciales y tokens
+.env
+*.env
+
 credentials.json
 token.json
-*.json.bak
+client_secret*.json
 
-# Cachés de Python
-__pycache__/
-*.py[cod]
+*.log
 
-# Backups locales
-*.bak
-*.bak-*
+.vscode/
+.idea/
+
+.DS_Store

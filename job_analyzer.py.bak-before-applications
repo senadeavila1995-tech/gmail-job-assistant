@@ -25,14 +25,6 @@ JOB_SOURCES = [
     "bumeran.com",
     "elempleo.com",
     "peakU".lower(),
-
-    # Plataformas ATS / reclutamiento
-    "hire.lever.co",
-    "lever.co",
-    "greenhouse.io",
-    "myworkday.com",
-    "workday.com",
-    "ashbyhq.com",
 ]
 
 
@@ -76,12 +68,6 @@ APPLICATION_PATTERNS = [
     r"\bhas aplicado\b",
     r"\byour application\b",
     r"\bapplication status\b",
-    r"\bapplication submitted\b",
-    r"\bapplication received\b",
-    r"\bwe received your application\b",
-    r"\bthank you for your application\b",
-    r"\bthank you for applying\b",
-    r"\bwe received your application for\b",
     r"\bresultados de pruebas\b",
     r"\bpasos a seguir\b",
 ]
@@ -199,137 +185,6 @@ def is_job_source(sender_email, body):
             return True
 
     return False
-
-
-def has_non_job_signal(subject, body):
-    """
-    Detecta correos que no representan una oportunidad laboral.
-    Se evalúa antes de aceptar una fuente laboral para evitar
-    falsos positivos de notificaciones, conversaciones y correos
-    administrativos.
-    """
-    text = normalize(subject + " " + body)
-    subject_n = normalize(subject)
-
-    non_job_patterns = [
-        # SENA / formación
-        "sena",
-        "análisis y desarrollo de software",
-        "analisis y desarrollo de software",
-        "bienvenida y confirmación de inscripción",
-        "confirmación de inscripción",
-        "confirmacion de inscripcion",
-        "formación titulada",
-        "formacion titulada",
-
-        # LinkedIn: notificaciones que no son ofertas
-        "ha visitado tu perfil",
-        "1 persona ha visitado tu perfil",
-        "personas han visitado tu perfil",
-        "tienes 1 invitación nueva",
-        "tienes una invitación nueva",
-        "invitación nueva",
-        "invitacion nueva",
-        "nueva conexión",
-        "nueva conexion",
-
-    ]
-
-    # Una respuesta personal se descarta por el asunto.
-    # No buscamos "re:" en todo el cuerpo para no eliminar
-    # procesos laborales legítimos que incluyan contenido citado.
-    if subject_n.startswith("re:"):
-        return True
-
-    return any(pattern in text for pattern in non_job_patterns)
-
-
-def has_remote_signal(subject, body):
-    """
-    Detecta señales explícitas de trabajo remoto.
-    No considera híbrido como remoto.
-    """
-    text = normalize(subject + " " + body)
-
-    remote_patterns = [
-        "remote",
-        "remoto",
-        "remota",
-        "trabajo remoto",
-        "empleo remoto",
-        "puesto remoto",
-        "vacante remota",
-        "100% remoto",
-        "100% remota",
-        "fully remote",
-        "fully remotely",
-        "remote position",
-        "remote job",
-        "remote work",
-        "work from home",
-        "work-from-home",
-        "home office",
-        "teletrabajo",
-        "teletrabajo 100%",
-        "distributed team",
-        "distributed",
-    ]
-
-    return any(pattern in text for pattern in remote_patterns)
-
-
-def has_job_signal(subject, body):
-    """
-    Señales explícitas de una oportunidad o proceso laboral.
-    """
-    text = normalize(subject + " " + body)
-
-    job_patterns = [
-        # Vacantes
-        "vacante",
-        "vacantes",
-        "oferta de empleo",
-        "oferta laboral",
-        "ofertas de empleo",
-        "ofertas laborales",
-        "puesto",
-        "posición",
-        "posicion",
-        "empleo",
-        "empleos",
-        "job",
-        "jobs",
-        "job opportunity",
-        "job alert",
-        "employment",
-
-        # Procesos de selección
-        "candidatura",
-        "candidatura enviada",
-        "postulación",
-        "postulacion",
-        "application",
-        "application submitted",
-        "application received",
-        "we received your application",
-        "thank you for your application",
-        "thank you for applying",
-        "proceso de selección",
-        "proceso de seleccion",
-        "selección",
-        "seleccion",
-        "entrevista",
-        "interview",
-        "prueba técnica",
-        "prueba tecnica",
-        "technical test",
-        "technical assessment",
-        "coding challenge",
-        "seguimiento de tu candidatura",
-        "seguimiento de tu postulación",
-    ]
-
-    return any(pattern in text for pattern in job_patterns)
 
 
 def has_offer_signal(subject, body):
@@ -573,12 +428,6 @@ def analyze(data):
         return None
 
     # SEGUNDO FILTRO:
-    # descartar correos administrativos, personales y
-    # notificaciones que no representan un proceso laboral.
-    if has_non_job_signal(subject, body):
-        return None
-
-    # TERCER FILTRO:
     # descartamos candidaturas ya enviadas
     if has_application_signal(subject, body):
         return None
@@ -726,73 +575,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-def classify_work_mode(subject, body):
-    """
-    Clasifica la modalidad laboral detectada en el correo.
-
-    Valores:
-    - REMOTO
-    - HIBRIDO
-    - PRESENCIAL
-    - NO_DEFINIDO
-    - ADMISION
-    """
-    text = normalize(subject + " " + body)
-
-    hybrid_patterns = [
-        "hybrid",
-        "hibrido",
-        "híbrido",
-        "hibrida",
-        "híbrida",
-        "trabajo híbrido",
-        "trabajo hibrido",
-        "modelo híbrido",
-        "modelo hibrido",
-    ]
-
-    remote_patterns = [
-        "100% remoto",
-        "100% remota",
-        "fully remote",
-        "remote position",
-        "remote job",
-        "remote work",
-        "work from home",
-        "work-from-home",
-        "home office",
-        "trabajo remoto",
-        "empleo remoto",
-        "puesto remoto",
-        "vacante remota",
-        "teletrabajo",
-        "teletrabajo 100%",
-        "remote",
-        "remoto",
-        "remota",
-        "distributed team",
-        "distributed",
-    ]
-
-    onsite_patterns = [
-        "presencial",
-        "on-site",
-        "on site",
-        "onsite",
-        "trabajo presencial",
-        "oficina",
-        "office based",
-        "in office",
-    ]
-
-    if any(pattern in text for pattern in hybrid_patterns):
-        return "HIBRIDO"
-
-    if any(pattern in text for pattern in remote_patterns):
-        return "REMOTO"
-
-    if any(pattern in text for pattern in onsite_patterns):
-        return "PRESENCIAL"
-
-    return "NO_DEFINIDO"

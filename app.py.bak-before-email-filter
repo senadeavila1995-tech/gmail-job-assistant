@@ -333,10 +333,6 @@ def analyze_email(service, message_id):
         # -----------------------------------------------------
         analyzed = analyze(data)
 
-        if analyzed:
-            from job_analyzer import classify_work_mode
-            analyzed["work_mode"] = classify_work_mode(subject, body)
-
         # -----------------------------------------------------
         # Las confirmaciones de candidatura también son
         # oportunidades laborales válidas.

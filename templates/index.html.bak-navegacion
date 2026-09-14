@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <title>Gmail Job Assistant</title>
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/app.css') }}"
+    >
+</head>
+
+<body>
+
+<div class="container py-4">
+
+    <!-- HEADER -->
+
+    <div class="header mb-4">
+
+        <div>
+            <h1>Gmail Job Assistant</h1>
+
+            <p class="text-muted mb-0">
+                Tu proceso laboral organizado automáticamente
+            </p>
+        </div>
+
+        <div class="badge bg-dark">
+            Gmail · Solo lectura
+        </div>
+
+    </div>
+
+
+    {% if error %}
+
+    <div class="alert alert-danger">
+
+        <strong>Error:</strong>
+
+        {{ error }}
+
+    </div>
+
+    {% endif %}
+
+
+    <!-- RESUMEN -->
+
+    <div class="row g-3 mb-5">
+
+        {% for status, config in status_config.items() %}
+
+        <div class="col-6 col-md-4 col-lg-3">
+
+            <div class="stat-card {{ config.class }}">
+
+                <div class="stat-icon">
+                    {{ config.icon }}
+                </div>
+
+                <div>
+
+                    <div class="stat-number">
+                        {{ stats.get(status, 0) }}
+                    </div>
+
+                    <div class="stat-title">
+                        {{ config.title }}
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+
+    <!-- PRIORIDAD -->
+
+    {% if grouped.get("ENTREVISTA") or grouped.get("ADMISION") %}
+
+    <div class="priority-section mb-5">
+
+        <div class="section-header priority-header">
+
+            <div>
+
+                <h2>🔥 Prioridad</h2>
+
+                <p>
+                    Procesos que pueden acercarte directamente
+                    a una contratación.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        {% for status in ["ENTREVISTA", "ADMISION"] %}
+
+            {% if grouped.get(status) %}
+
+                {% for email in grouped[status] %}
+
+                <div class="job-card priority-card mb-3">
+
+                    <div class="d-flex justify-content-between">
+
+                        <div>
+
+                            <span class="status-badge {{ email.status_config.class }}">
+
+                                {{ email.status_config.icon }}
+
+                                {{ email.status_config.title }}
+
+                            </span>
+
+                            <h3 class="mt-2">
+                                {{ email.position }}
+                            </h3>
+
+                        </div>
+
+                        <div class="score">
+
+                            {{ email.score }}%
+
+                            <small>
+                                compatibilidad
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="company">
+
+                        🏢 {{ email.company }}
+
+                    </div>
+
+
+                    <div class="email-info">
+
+                        📧 {{ email.sender }}
+
+                        ·
+
+                        🌐 {{ email.source }}
+
+                        ·
+
+                        📅 {{ email.date }}
+
+                    </div>
+
+
+                    {% if email.skills %}
+
+                    <div class="skills">
+
+                        {% for skill in email.skills %}
+
+                        <span class="skill">
+                            {{ skill }}
+                        </span>
+
+                        {% endfor %}
+
+                    </div>
+
+                    {% endif %}
+
+
+                    <div class="subject">
+
+                        <strong>Asunto:</strong>
+
+                        {{ email.subject }}
+
+                    </div>
+
+
+                    <div class="actions">
+
+                        <a
+                            href="{{ email.gmail_url }}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="btn btn-dark"
+                        >
+                            📧 Abrir en Gmail
+                        </a>
+
+                        {% if email.url %}
+
+                        <a
+                            href="{{ email.url }}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="btn btn-primary"
+                        >
+                            🟢 Ver oferta
+                        </a>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+                {% endfor %}
+
+            {% endif %}
+
+        {% endfor %}
+
+    </div>
+
+    {% endif %}
+
+
+    <!-- RESTO DE ESTADOS -->
+
+    {% for status in [
+        "PRUEBA",
+        "SEGUIMIENTO",
+        "APLICADA",
+        "OFERTA",
+        "RECHAZADA"
+    ] %}
+
+        {% if grouped.get(status) %}
+
+        <section class="status-section mb-5">
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2>
+
+                        {{ status_config[status].icon }}
+
+                        {{ status_config[status].title }}
+
+                    </h2>
+
+                    <p>
+                        {{ grouped[status]|length }}
+                        correo(s)
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            {% for email in grouped[status] %}
+
+            <div class="job-card mb-3">
+
+                <div class="d-flex justify-content-between">
+
+                    <div>
+
+                        <span class="status-badge {{ email.status_config.class }}">
+
+                            {{ email.status_config.icon }}
+
+                            {{ email.status_config.title }}
+
+                        </span>
+
+                        <h3 class="mt-2">
+                            {{ email.position }}
+                        </h3>
+
+                    </div>
+
+
+                    <div class="score">
+
+                        {{ email.score }}%
+
+                        <small>
+                            compatibilidad
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <div class="company">
+
+                    🏢 {{ email.company }}
+
+                </div>
+
+
+                <div class="email-info">
+
+                    📧 {{ email.sender }}
+
+                    ·
+
+                    🌐 {{ email.source }}
+
+                    ·
+
+                    📅 {{ email.date }}
+
+                </div>
+
+
+                {% if email.skills %}
+
+                <div class="skills">
+
+                    {% for skill in email.skills %}
+
+                    <span class="skill">
+                        {{ skill }}
+                    </span>
+
+                    {% endfor %}
+
+                </div>
+
+                {% endif %}
+
+
+                <div class="subject">
+
+                    <strong>Asunto:</strong>
+
+                    {{ email.subject }}
+
+                </div>
+
+
+                <div class="actions">
+
+                    <a
+                        href="{{ email.gmail_url }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="btn btn-dark"
+                    >
+                        📧 Abrir en Gmail
+                    </a>
+
+                    {% if email.url %}
+
+                    <a
+                        href="{{ email.url }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="btn btn-outline-primary"
+                    >
+                        🟢 Ver oferta
+                    </a>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </section>
+
+        {% endif %}
+
+    {% endfor %}
+
+
+    {% if not emails and not error %}
+
+    <div class="empty-state">
+
+        <div>
+            📭
+        </div>
+
+        <h3>
+            No encontramos procesos laborales
+        </h3>
+
+        <p>
+            No hay correos que coincidan con las reglas actuales.
+        </p>
+
+    </div>
+
+    {% endif %}
+
+
+</div>
+
+</body>
+
+</html>

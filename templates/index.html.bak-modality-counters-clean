@@ -58,41 +58,44 @@
     {% endif %}
 
 
-    <!-- RESUMEN POR ESTADO -->
+    <!-- RESUMEN -->
 
-    <div class="row g-3 mb-4" id="status-summary">
+    <div class="row g-3 mb-5">
 
-        {% set summary_statuses = [
-            "ENTREVISTA",
-            "ADMISION",
-            "PRUEBA",
-            "SEGUIMIENTO",
-            "APLICADA",
-            "OFERTA",
-            "RECHAZADA"
-        ] %}
-
-        {% for summary_status in summary_statuses %}
+        {% for status, config in status_config.items() %}
 
         <div class="col-6 col-md-4 col-lg-3">
 
-            <div class="stat-card stat-status-card"
-                 data-status-counter="{{ summary_status }}">
+            <div
+                class="stat-card stat-nav {{ config.class }}"
+                role="button"
+                tabindex="0"
+                data-target="{% if status == 'ENTREVISTA' %}#entrevistas{% elif status == 'ADMISION' %}#admision{% elif status == 'PRUEBA' %}#pruebas{% elif status == 'SEGUIMIENTO' %}#seguimiento{% elif status == 'APLICADA' %}#aplicaciones{% elif status == 'OFERTA' %}#ofertas{% elif status == 'RECHAZADA' %}#rechazadas{% endif %}"
+                aria-label="Ir a {{ config.title }}"
+            >
 
                 <div class="stat-icon">
-                    {{ status_config[summary_status].icon }}
+                    {{ config.icon }}
                 </div>
 
                 <div class="stat-content">
 
                     <div class="stat-number">
-                        0
+                        {{ stats.get(status, 0) }}
                     </div>
 
                     <div class="stat-title">
-                        {{ status_config[summary_status].title }}
+                        {{ config.title }}
                     </div>
 
+                </div>
+
+                <div class="stat-arrow">
+                    →
+                </div>
+
+                <div class="stat-hint">
+                    Ver sección
                 </div>
 
             </div>
@@ -103,53 +106,56 @@
 
     </div>
 
+
     <!-- FILTRO DE MODALIDAD -->
 
     <div class="card shadow-sm border-0 mb-4">
-
         <div class="card-body">
 
             <div class="row align-items-center g-3">
 
-                <div class="col-md-8">
+                <div class="col-md-4">
 
-                    <label for="global-work-mode-filter"
-                           class="form-label fw-semibold mb-1">
-                        Filtrar por modalidad
+                    <label
+                        for="workModeFilter"
+                        class="form-label fw-semibold mb-1"
+                    >
+                        Modalidad laboral
                     </label>
 
-                    <select id="global-work-mode-filter"
-                            class="form-select">
-
+                    <select
+                        id="workModeFilter"
+                        class="form-select"
+                    >
                         <option value="TODAS">
                             Todas
                         </option>
 
                         <option value="REMOTO">
-                            🟢 100% remoto
+                            100% remoto
                         </option>
 
                         <option value="HIBRIDO">
-                            🟡 Híbrido
+                            Híbrido
                         </option>
 
                         <option value="PRESENCIAL">
-                            🔴 No remoto / presencial
+                            No remoto / presencial
                         </option>
 
                         <option value="NO_DEFINIDO">
-                            ⚪ Sin definir
+                            Sin definir
                         </option>
-
                     </select>
 
                 </div>
 
-                <div class="col-md-4">
+                <div class="col-md-8">
 
                     <div class="text-muted small mt-md-4">
-                        Filtra las oportunidades sin cambiar
-                        su estado ni eliminar información.
+                        Las oportunidades no se eliminan.
+                        Usa este filtro para mostrar la modalidad
+                        laboral que te interese.
                     </div>
 
                 </div>
@@ -157,13 +163,12 @@
             </div>
 
         </div>
-
     </div>
 
 
     <!-- PRIORIDAD -->
 
-    {% if True %}
+    {% if grouped.get("ENTREVISTA") or grouped.get("ADMISION") %}
 
     <div class="priority-section mb-5">
 
@@ -184,6 +189,8 @@
 
 
         {% for status in ["ENTREVISTA", "ADMISION"] %}
+
+            {% if grouped.get(status) %}
 
                 <div
                     id="{% if status == 'ENTREVISTA' %}entrevistas{% else %}admision{% endif %}"
@@ -210,38 +217,43 @@
 
                             </span>
 
-                            <div class="work-mode-control mt-2 mb-2">
+                            <div class="mt-2 mb-2">
 
-                                <label class="form-label small text-muted mb-1">
-                                    Modalidad
-                                </label>
+                                {% if email.status == "ADMISION" %}
 
-                                <select class="form-select form-select-sm work-mode-select">
+                                <span class="badge bg-secondary">
+                                    🎓 Admisión
+                                </span>
 
-                                    <option value="REMOTO"
-                                        {% if email.work_mode == "REMOTO" %}selected{% endif %}>
-                                        🟢 100% remoto
-                                    </option>
+                                {% elif email.work_mode == "REMOTO" %}
 
-                                    <option value="HIBRIDO"
-                                        {% if email.work_mode == "HIBRIDO" %}selected{% endif %}>
-                                        🟡 Híbrido
-                                    </option>
+                                <span class="badge bg-success">
+                                    🟢 100% remoto
+                                </span>
 
-                                    <option value="PRESENCIAL"
-                                        {% if email.work_mode == "PRESENCIAL" %}selected{% endif %}>
-                                        🔴 No remoto / presencial
-                                    </option>
+                                {% elif email.work_mode == "HIBRIDO" %}
 
-                                    <option value="NO_DEFINIDO"
-                                        {% if email.work_mode == "NO_DEFINIDO" %}selected{% endif %}>
-                                        ⚪ Sin definir
-                                    </option>
+                                <span class="badge bg-warning text-dark">
+                                    🟡 Híbrido
+                                </span>
 
-                                </select>
+                                {% elif email.work_mode == "PRESENCIAL" %}
+
+                                <span class="badge bg-danger">
+                                    🔴 No remoto / presencial
+                                </span>
+
+                                {% else %}
+
+                                <span class="badge bg-secondary">
+                                    ⚪ Sin definir
+                                </span>
+
+                                {% endif %}
 
                             </div>
-<h3 class="mt-2">
+
+                            <h3 class="mt-2">
                                 {{ email.position }}
                             </h3>
 
@@ -338,6 +350,7 @@
 
                 {% endfor %}
 
+            {% endif %}
 
         {% endfor %}
 
@@ -356,6 +369,8 @@
         "RECHAZADA"
     ] %}
 
+        {% if grouped.get(status) %}
+
         <section
             id="{% if status == 'PRUEBA' %}pruebas{% elif status == 'SEGUIMIENTO' %}seguimiento{% elif status == 'APLICADA' %}aplicaciones{% elif status == 'OFERTA' %}ofertas{% elif status == 'RECHAZADA' %}rechazadas{% endif %}"
             class="status-section mb-5 section-anchor-target"
@@ -373,12 +388,10 @@
 
                     </h2>
 
-                    <p class="section-count">
+                    <p>
                         {{ grouped[status]|length }}
                         correo(s)
                     </p>
-
-
 
                 </div>
 
@@ -405,38 +418,43 @@
 
                         </span>
 
-                            <div class="work-mode-control mt-2 mb-2">
+                        <div class="mt-2 mb-2">
 
-                                <label class="form-label small text-muted mb-1">
-                                    Modalidad
-                                </label>
+                            {% if email.status == "ADMISION" %}
 
-                                <select class="form-select form-select-sm work-mode-select">
+                            <span class="badge bg-secondary">
+                                🎓 Admisión
+                            </span>
 
-                                    <option value="REMOTO"
-                                        {% if email.work_mode == "REMOTO" %}selected{% endif %}>
-                                        🟢 100% remoto
-                                    </option>
+                            {% elif email.work_mode == "REMOTO" %}
 
-                                    <option value="HIBRIDO"
-                                        {% if email.work_mode == "HIBRIDO" %}selected{% endif %}>
-                                        🟡 Híbrido
-                                    </option>
+                            <span class="badge bg-success">
+                                🟢 100% remoto
+                            </span>
 
-                                    <option value="PRESENCIAL"
-                                        {% if email.work_mode == "PRESENCIAL" %}selected{% endif %}>
-                                        🔴 No remoto / presencial
-                                    </option>
+                            {% elif email.work_mode == "HIBRIDO" %}
 
-                                    <option value="NO_DEFINIDO"
-                                        {% if email.work_mode == "NO_DEFINIDO" %}selected{% endif %}>
-                                        ⚪ Sin definir
-                                    </option>
+                            <span class="badge bg-warning text-dark">
+                                🟡 Híbrido
+                            </span>
 
-                                </select>
+                            {% elif email.work_mode == "PRESENCIAL" %}
 
-                            </div>
-<h3 class="mt-2">
+                            <span class="badge bg-danger">
+                                🔴 No remoto / presencial
+                            </span>
+
+                            {% else %}
+
+                            <span class="badge bg-secondary">
+                                ⚪ Sin definir
+                            </span>
+
+                            {% endif %}
+
+                        </div>
+
+                        <h3 class="mt-2">
                             {{ email.position }}
                         </h3>
 
@@ -536,6 +554,7 @@
 
         </section>
 
+        {% endif %}
 
     {% endfor %}
 
@@ -566,271 +585,125 @@
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
-    const modeSelects =
-        document.querySelectorAll(".work-mode-select");
+    // -----------------------------------------------------
+    // FILTRO DE MODALIDAD LABORAL
+    // -----------------------------------------------------
+
+    const workModeFilter =
+        document.getElementById("workModeFilter");
 
     const jobCards =
         document.querySelectorAll(".job-card");
 
-    const globalFilter =
-        document.getElementById("global-work-mode-filter");
+    function applyWorkModeFilter() {
 
-
-    function normalizeMode(mode) {
-
-        mode = (mode || "").trim().toUpperCase();
-
-        if (
-            mode === "REMOTO" ||
-            mode === "HIBRIDO" ||
-            mode === "PRESENCIAL" ||
-            mode === "NO_DEFINIDO"
-        ) {
-            return mode;
+        if (!workModeFilter) {
+            return;
         }
-
-        return "NO_DEFINIDO";
-    }
-
-
-    function normalizeStatus(status) {
-        return (status || "").trim().toUpperCase();
-    }
-
-
-    function getCardWorkMode(card) {
-
-        const mode = card.dataset.workMode;
-
-        if (mode) {
-            return normalizeMode(mode);
-        }
-
-        const select =
-            card.querySelector(".work-mode-select");
-
-        if (select) {
-            return normalizeMode(select.value);
-        }
-
-        return "NO_DEFINIDO";
-    }
-
-
-    function cardMatchesFilter(card, selectedMode) {
-
-        if (selectedMode === "TODAS") {
-            return true;
-        }
-
-        return (
-            getCardWorkMode(card) ===
-            normalizeMode(selectedMode)
-        );
-    }
-
-
-    function updateDashboard() {
 
         const selectedMode =
-            globalFilter
-                ? globalFilter.value
-                : "TODAS";
-
-
-        // ====================================================
-        // 1. MOSTRAR / OCULTAR OPORTUNIDADES
-        // ====================================================
+            workModeFilter.value;
 
         jobCards.forEach(function (card) {
 
-            const visible =
-                cardMatchesFilter(
-                    card,
-                    selectedMode
-                );
+            const workMode =
+                card.dataset.workMode || "NO_DEFINIDO";
 
-            card.style.display =
-                visible ? "" : "none";
+            const status =
+                card.dataset.status || "";
 
-        });
+            // ADMISION siempre permanece visible.
+            if (status === "ADMISION") {
 
+                card.style.display = "";
 
-        // ====================================================
-        // 2. RECALCULAR CARDS SUPERIORES POR ESTADO
-        // ====================================================
-
-        const statusCounts = {};
-
-
-        document
-            .querySelectorAll("[data-status-counter]")
-            .forEach(function (element) {
-
-                const status =
-                    normalizeStatus(
-                        element.dataset.statusCounter
-                    );
-
-                statusCounts[status] = 0;
-
-            });
-
-
-        jobCards.forEach(function (card) {
-
-            if (
-                !cardMatchesFilter(
-                    card,
-                    selectedMode
-                )
-            ) {
                 return;
             }
 
-
-            const status =
-                normalizeStatus(
-                    card.dataset.status
-                );
-
-
             if (
-                Object.prototype.hasOwnProperty.call(
-                    statusCounts,
-                    status
-                )
+                selectedMode === "TODAS" ||
+                workMode === selectedMode
             ) {
 
-                statusCounts[status]++;
+                card.style.display = "";
+
+            } else {
+
+                card.style.display = "none";
 
             }
 
         });
 
+    }
 
-        document
-            .querySelectorAll("[data-status-counter]")
-            .forEach(function (element) {
+    if (workModeFilter) {
 
-                const status =
-                    normalizeStatus(
-                        element.dataset.statusCounter
-                    );
+        workModeFilter.addEventListener(
+            "change",
+            applyWorkModeFilter
+        );
 
-                const number =
-                    element.querySelector(
-                        ".stat-number"
-                    );
-
-                if (number) {
-
-                    number.textContent =
-                        statusCounts[status] || 0;
-
-                }
-
-            });
-
-
-        // ====================================================
-        // 3. ACTUALIZAR CONTADORES DE LAS SECCIONES
-        // ====================================================
-
-        document
-            .querySelectorAll(
-                ".priority-section, .status-section"
-            )
-            .forEach(function (section) {
-
-                const cards =
-                    section.querySelectorAll(
-                        ".job-card"
-                    );
-
-                let visibleCount = 0;
-
-                cards.forEach(function (card) {
-
-                    if (
-                        card.style.display !== "none"
-                    ) {
-                        visibleCount++;
-                    }
-
-                });
-
-                const countElement =
-                    section.querySelector(
-                        ".section-count"
-                    );
-
-                if (countElement) {
-
-                    countElement.textContent =
-                        visibleCount +
-                        " correo(s)";
-
-                }
-
-            });
-
+        applyWorkModeFilter();
     }
 
 
-    // ========================================================
-    // CAMBIO DEL FILTRO GLOBAL
-    // ========================================================
+    // -----------------------------------------------------
+    // NAVEGACIÓN DE LAS TARJETAS DE RESUMEN
+    // -----------------------------------------------------
 
-    if (globalFilter) {
+    const statCards = document.querySelectorAll(".stat-nav");
 
-        globalFilter.addEventListener(
-            "change",
-            function () {
+    statCards.forEach(function (card) {
 
-                updateDashboard();
+        function navigateToSection() {
 
+            const target = card.dataset.target;
+
+            if (!target) {
+                return;
             }
-        );
 
-    }
+            const section = document.querySelector(target);
 
-
-    // ========================================================
-    // CAMBIO DE MODALIDAD DE UNA OPORTUNIDAD
-    // ========================================================
-
-    modeSelects.forEach(function (select) {
-
-        select.addEventListener(
-            "change",
-            function () {
-
-                const card =
-                    select.closest(".job-card");
-
-                if (card) {
-
-                    card.dataset.workMode =
-                        normalizeMode(
-                            select.value
-                        );
-
-                }
-
-                updateDashboard();
-
+            if (!section) {
+                return;
             }
-        );
+
+            section.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+
+            // Pequeño efecto visual al llegar
+            const sectionTarget =
+                section.classList.contains("section-anchor")
+                    ? section.parentElement
+                    : section;
+
+            if (sectionTarget) {
+                sectionTarget.classList.add("section-highlight");
+
+                setTimeout(function () {
+                    sectionTarget.classList.remove("section-highlight");
+                }, 1200);
+            }
+        }
+
+        card.addEventListener("click", navigateToSection);
+
+        card.addEventListener("keydown", function (event) {
+
+            if (event.key === "Enter" || event.key === " ") {
+
+                event.preventDefault();
+
+                navigateToSection();
+            }
+
+        });
 
     });
-
-
-    // ========================================================
-    // CONTEO INICIAL
-    // ========================================================
-
-    updateDashboard();
 
 });
 </script>
