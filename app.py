@@ -210,6 +210,47 @@ def classify_status(subject, body):
     # ---------------------------------------------------------
     # 5. SEGUIMIENTO
     # ---------------------------------------------------------
+    # ---------------------------------------------------------
+    # 5. APLICADA
+    # ---------------------------------------------------------
+    # Confirmaciones de que la candidatura fue recibida/enviada.
+    # Estas reglas deben evaluarse ANTES de seguimiento.
+    applied_subject = [
+        "candidatura enviada",
+        "postulación enviada",
+        "solicitud enviada",
+        "hemos recibido tu candidatura",
+        "hemos recibido tu postulación",
+        "application submitted",
+        "application received",
+        "we received your application",
+        "thank you for your application",
+        "thank you for applying",
+        "your application has been received",
+        "tu solicitud ha sido enviada",
+    ]
+
+    if any(x in subject_n for x in applied_subject):
+        return "APLICADA"
+
+    applied_body = [
+        "hemos recibido tu candidatura",
+        "hemos recibido tu postulación",
+        "hemos recibido tu solicitud",
+        "we received your application",
+        "thank you for your application",
+        "thank you for applying",
+        "your application has been received",
+        "application received",
+        "application submitted",
+    ]
+
+    if any(x in body_n for x in applied_body):
+        return "APLICADA"
+
+    # ---------------------------------------------------------
+    # 6. SEGUIMIENTO
+    # ---------------------------------------------------------
     followup_subject = [
         "seguimiento de tu candidatura",
         "seguimiento de tu postulación",
@@ -220,30 +261,11 @@ def classify_status(subject, body):
         "application update",
         "application status",
         "update on your application",
-        "your application",
         "proceso de selección",
     ]
 
     if any(x in subject_n for x in followup_subject):
         return "SEGUIMIENTO"
-
-    # ---------------------------------------------------------
-    # 6. APLICADA
-    # ---------------------------------------------------------
-    applied_subject = [
-        "candidatura enviada",
-        "postulación enviada",
-        "solicitud enviada",
-        "hemos recibido tu candidatura",
-        "hemos recibido tu postulación",
-        "application submitted",
-        "application received",
-        "we received your application",
-        "tu solicitud ha sido enviada",
-    ]
-
-    if any(x in subject_n for x in applied_subject):
-        return "APLICADA"
 
     # ---------------------------------------------------------
     # 7. OFERTA
@@ -301,18 +323,157 @@ def analyze_email(service, message_id):
 
         subject = data.get("subject", "")
         body = data.get("body", "")
+        sender_name = data.get("sender_name", "")
+        sender_email = data.get("sender_email", "")
 
         status = classify_status(subject, body)
 
-        # Si no parece un proceso laboral, dejamos que el analizador
-        # existente decida si es una oportunidad.
+        # -----------------------------------------------------
+        # Analizador normal
+        # -----------------------------------------------------
         analyzed = analyze(data)
 
+        # -----------------------------------------------------
+        # Las confirmaciones de candidatura también son
+        # oportunidades laborales válidas.
+        # -----------------------------------------------------
+        if status == "APLICADA":
+            import re
+
+            text = f"{subject} {body}"
+
+            # Empresa: normalmente viene en el nombre del remitente.
+            company = sender_name.strip() if sender_name else ""
+
+            if not company:
+                company = "Empresa no identificada"
+
+            # -------------------------------------------------
+            # Extraer cargo desde frases típicas de ATS.
+            # Ejemplo:
+            # "we received your application for React Engineer..."
+            # -------------------------------------------------
+            position = ""
+
+            position_patterns = [
+                # Caso típico de Lever:
+                # "we received your application for React Engineer - Remote,
+                # Latin America, and we are delighted..."
+                r"received your application for\s+(.+?),\s+and we\b",
+                r"application for\s+(.+?),\s+and we\b",
+                r"applied for\s+(.+?),\s+and we\b",
+                r"application for the position of\s+(.+?),\s+and we\b",
+                r"application for the role of\s+(.+?),\s+and we\b",
+            ]
+
+            for pattern in position_patterns:
+                match = re.search(
+                    pattern,
+                    text,
+                    re.IGNORECASE
+                )
+
+                if match:
+                    position = re.sub(
+                        r"\\s+",
+                        " ",
+                        match.group(1)
+                    ).strip()
+
+                    position = position.rstrip(",")
+                    break
+
+            # Fallback: intentar encontrar un título técnico.
+            if not position:
+                title_patterns = [
+                    r"React Engineer[^<.!?]*",
+                    r"Software Engineer[^<.!?]*",
+                    r"Frontend Developer[^<.!?]*",
+                    r"Backend Developer[^<.!?]*",
+                    r"Full Stack Developer[^<.!?]*",
+                    r"Fullstack Developer[^<.!?]*",
+                    r"Software Developer[^<.!?]*",
+                    r"Developer[^<.!?]*",
+                ]
+
+                for pattern in title_patterns:
+                    match = re.search(
+                        pattern,
+                        text,
+                        re.IGNORECASE
+                    )
+
+                    if match:
+                        position = re.sub(
+                            r"\\s+",
+                            " ",
+                            match.group(0)
+                        ).strip()
+                        break
+
+            if not position:
+                position = subject.strip()
+
+            # -------------------------------------------------
+            # Score de candidatura
+            # -------------------------------------------------
+            try:
+                from job_analyzer import (
+                    extract_skills,
+                    calculate_score,
+                    classify,
+                )
+
+                skills = extract_skills(
+                    subject,
+                    body
+                )
+
+                score = calculate_score(
+                    skills,
+                    subject,
+                    body
+                )
+
+                classification = classify(score)
+
+            except Exception:
+                skills = []
+                score = 0
+                classification = "SIN CLASIFICAR"
+
+            result = {
+                "id": message_id,
+                "status": status,
+                "status_config": STATUS_CONFIG[status],
+                "subject": subject,
+                "company": company,
+                "position": position[:150],
+                "source": sender_email.split("@")[-1].lower()
+                    if "@" in sender_email
+                    else "",
+                "sender": sender_name or sender_email,
+                "sender_email": sender_email,
+                "date": data.get("date", ""),
+                "body": body,
+                "skills": skills,
+                "score": score,
+                "classification": classification,
+                "url": "",
+                "gmail_url": (
+                    "https://mail.google.com/mail/u/0/#all/"
+                    + message_id
+                ),
+            }
+
+            return result
+
+        # -----------------------------------------------------
+        # Oportunidades normales
+        # -----------------------------------------------------
         if not status and not analyzed:
             return None
 
-        # Si el analizador lo considera relevante pero no pudimos
-        # determinar estado, lo mostramos como oferta.
         if not status:
             status = "OFERTA"
 
@@ -323,12 +484,15 @@ def analyze_email(service, message_id):
             "status": status,
             "status_config": STATUS_CONFIG[status],
             "subject": subject,
-            "sender": data.get("sender_name") or data.get("sender_email", ""),
-            "sender_email": data.get("sender_email", ""),
+            "sender": sender_name or sender_email,
+            "sender_email": sender_email,
             "date": data.get("date", ""),
             "source": data.get("source") or "",
             "body": body,
-            "gmail_url": f"https://mail.google.com/mail/u/0/#all/{message_id}",
+            "gmail_url": (
+                "https://mail.google.com/mail/u/0/#all/"
+                + message_id
+            ),
         })
 
         return result

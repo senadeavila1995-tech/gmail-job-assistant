@@ -25,6 +25,14 @@ JOB_SOURCES = [
     "bumeran.com",
     "elempleo.com",
     "peakU".lower(),
+
+    # Plataformas ATS / reclutamiento
+    "hire.lever.co",
+    "lever.co",
+    "greenhouse.io",
+    "myworkday.com",
+    "workday.com",
+    "ashbyhq.com",
 ]
 
 
@@ -68,6 +76,12 @@ APPLICATION_PATTERNS = [
     r"\bhas aplicado\b",
     r"\byour application\b",
     r"\bapplication status\b",
+    r"\bapplication submitted\b",
+    r"\bapplication received\b",
+    r"\bwe received your application\b",
+    r"\bthank you for your application\b",
+    r"\bthank you for applying\b",
+    r"\bwe received your application for\b",
     r"\bresultados de pruebas\b",
     r"\bpasos a seguir\b",
 ]
