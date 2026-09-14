@@ -1,0 +1,17 @@
+# Entorno virtual
+.venv/
+venv/
+env/
+
+# Credenciales y tokens
+credentials.json
+token.json
+*.json.bak
+
+# Cachés de Python
+__pycache__/
+*.py[cod]
+
+# Backups locales
+*.bak
+*.bak-*
