@@ -201,6 +201,103 @@ def is_job_source(sender_email, body):
     return False
 
 
+def has_non_job_signal(subject, body):
+    """
+    Detecta correos que no representan una oportunidad laboral.
+    Se evalúa antes de aceptar una fuente laboral para evitar
+    falsos positivos de notificaciones, conversaciones y correos
+    administrativos.
+    """
+    text = normalize(subject + " " + body)
+    subject_n = normalize(subject)
+
+    non_job_patterns = [
+        # SENA / formación
+        "sena",
+        "análisis y desarrollo de software",
+        "analisis y desarrollo de software",
+        "bienvenida y confirmación de inscripción",
+        "confirmación de inscripción",
+        "confirmacion de inscripcion",
+        "formación titulada",
+        "formacion titulada",
+
+        # LinkedIn: notificaciones que no son ofertas
+        "ha visitado tu perfil",
+        "1 persona ha visitado tu perfil",
+        "personas han visitado tu perfil",
+        "tienes 1 invitación nueva",
+        "tienes una invitación nueva",
+        "invitación nueva",
+        "invitacion nueva",
+        "nueva conexión",
+        "nueva conexion",
+
+    ]
+
+    # Una respuesta personal se descarta por el asunto.
+    # No buscamos "re:" en todo el cuerpo para no eliminar
+    # procesos laborales legítimos que incluyan contenido citado.
+    if subject_n.startswith("re:"):
+        return True
+
+    return any(pattern in text for pattern in non_job_patterns)
+
+
+def has_job_signal(subject, body):
+    """
+    Señales explícitas de una oportunidad o proceso laboral.
+    """
+    text = normalize(subject + " " + body)
+
+    job_patterns = [
+        # Vacantes
+        "vacante",
+        "vacantes",
+        "oferta de empleo",
+        "oferta laboral",
+        "ofertas de empleo",
+        "ofertas laborales",
+        "puesto",
+        "posición",
+        "posicion",
+        "empleo",
+        "empleos",
+        "job",
+        "jobs",
+        "job opportunity",
+        "job alert",
+        "employment",
+
+        # Procesos de selección
+        "candidatura",
+        "candidatura enviada",
+        "postulación",
+        "postulacion",
+        "application",
+        "application submitted",
+        "application received",
+        "we received your application",
+        "thank you for your application",
+        "thank you for applying",
+        "proceso de selección",
+        "proceso de seleccion",
+        "selección",
+        "seleccion",
+        "entrevista",
+        "interview",
+        "prueba técnica",
+        "prueba tecnica",
+        "technical test",
+        "technical assessment",
+        "coding challenge",
+        "seguimiento de tu candidatura",
+        "seguimiento de tu postulación",
+    ]
+
+    return any(pattern in text for pattern in job_patterns)
+
+
 def has_offer_signal(subject, body):
     text = normalize(subject + " " + body)
 
@@ -442,6 +539,12 @@ def analyze(data):
         return None
 
     # SEGUNDO FILTRO:
+    # descartar correos administrativos, personales y
+    # notificaciones que no representan un proceso laboral.
+    if has_non_job_signal(subject, body):
+        return None
+
+    # TERCER FILTRO:
     # descartamos candidaturas ya enviadas
     if has_application_signal(subject, body):
         return None

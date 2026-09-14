@@ -556,6 +556,23 @@ def dashboard():
     for item in opportunities:
         grouped[item["status"]].append(item)
 
+    # Ordenar cada sección por fecha: más reciente primero.
+    from email.utils import parsedate_to_datetime
+
+    def sort_by_date(item):
+        date_value = item.get("date", "")
+
+        try:
+            return parsedate_to_datetime(date_value).timestamp()
+        except Exception:
+            return 0
+
+    for status in grouped:
+        grouped[status].sort(
+            key=sort_by_date,
+            reverse=True,
+        )
+
     stats = {
         status: len(grouped[status])
         for status in STATUS_CONFIG
